@@ -21,5 +21,3 @@ with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             )
         except Exception as exc:
             print(url, exc)
-        else:
-            print(url)

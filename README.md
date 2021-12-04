@@ -65,13 +65,13 @@
 
 И теперь сравним время работы и нагрузку на ЦП одного потока с временем работы с 5, 10, 100 workers:
 
-С max_workers=5:
+<h4>С max_workers=5:</h4>
 
 ![Sreenshot](screenshots_for_IO-bound/task_manager_screenshot_5-workers.png)
 
 ![Sreenshot](screenshots_for_IO-bound/5_threads_solution.png)
 
-C max_workers=10:
+<h4>C max_workers=10:</h4>
 
 ![Sreenshot](screenshots_for_IO-bound/task_manager_screenshot_10-workers.png)
 ![Sreenshot](screenshots_for_IO-bound/10_threads_solution.png)
@@ -79,7 +79,7 @@ C max_workers=10:
 На диаграмме диспетчера (график ЦП) тест начинается примерно в середине (после проседания),его и стоит анализировать. 
 На 3м скриншоте видны задержки первые 5.5 секунд в MainThread
 
-И с max_workers=100:
+<h4>И с max_workers=100:</h4>
 
 ![Sreenshot](screenshots_for_IO-bound/task_manager_screenshot_100-workers.png)
 ![Sreenshot](screenshots_for_IO-bound/100_threads_solution.png)
@@ -90,3 +90,105 @@ C max_workers=10:
 В итоге по графикам видно, что количество потоков в IO-bound задаче никак не влияет на количество используемой памяти. Нагрузка на процессор при max_workers=5 не сильно отличается от нагрузки при max_workers=100, т.е. использование ThreadPoolExecutor увеличивает нагрузку на процессор, но предельное значение уровня нагрузки достигается почти сразу и дальнейшее увеличение количества воркеров ведет только к изменению времени.<br>
 
 Теперь о времени. Для 5, 10 и 100 воркеров время работы составило 535, 292 и 218 секунд соответственно. Значит увеличение количества потоков ведет к увеличению скорости работы, но постепенно увеличение количества потоков будет приводить ко все меньшему увеличению производительности, пока не будет достигнут предел.
+_____
+
+<h2>CPU-bound</h2>
+
+Теперь генерируем монетки. Программа будет работать, пока не найдет 4 монетки. Начинаем с генерации на одном ядре:
+
+    from hashlib import md5
+    from random import choice
+    
+    coins = 0
+    while coins != 4:
+        s = "".join([choice("0123456789") for i in range(50)])
+        h = md5(s.encode('utf8')).hexdigest()
+    
+        if h.endswith("00000"):
+            coins += 1
+            print(s, h)
+
+Результат работы программы:
+
+![Screenshot](task-manager-one-core.png)
+![Scrreenshot](one-core-solution.png)
+
+
+Теперь перепишем код с использованием ProcessPoolExecutor:
+
+    from hashlib import md5
+    from random import choice
+    import concurrent.futures
+    
+    
+    def crypt_miner(i):
+        while True:
+            s = "".join([choice("0123456789") for j in range(50)])
+            h = md5(s.encode('utf8')).hexdigest()
+    
+            if h.endswith("00000"):
+                return f"{s} {h}"
+    
+    
+    def main():
+        with concurrent.futures.ProcessPoolExecutor(max_workers=2) as executor:
+            for coin in executor.map(crypt_miner, range(4)):
+                print(coin)
+    
+    
+    if __name__ == '__main__':
+        main()
+
+Для анализа тестов важно знать информацию о процессоре (2 ядра):
+
+![Screenshot](processor_info.png)
+
+Тесты начнем с <h4>max_workers=2:</h4>
+
+![Screenshot](task-manager_2-workers_start.png)
+С самого начала процессор был нагружен на 100%, диспетчер отображал 2 запущенных процесса
+
+![Screenshot](task-manager_2-workers_end.png)
+Уровень загруженности процесора не менялся до конца работы программы
+
+![Screenshot](2-cores-solution.png)
+Обратил внимание на то,что в консоли монеты появлялись парами. Не знаю, влияло ли это как-нибудь на скорость вычислений, но время работы даже больше, чем без ProcessPoolExecutor
+
+<h4>Теперь max_workers=4:</h4>
+
+![Screenshot](task-manager_4-workers_start.png)
+Нагрузка также с самого начала 100%, диспетчер отображает 4 запущенных процесса
+
+![Screenshot](task-manager_4-workers_end.png)
+И как в прошлый раз, нагрузка оставалсь 100% до конца работы программы
+
+![Screenshot](4-cores-solution.png)
+Но время изменилось, монетки майнились быстрее
+
+
+На этапе <h4>max-workers=10</h4> я не могу объяснить происходящее:
+
+![Screenshot](task-manager_10-workers_start.png)
+Началось все так же со 100%, но диспетчер отображал уже только 4 процесса, которые занимали основные ресуры процессора(23-24% на каждый процесс)
+
+![Screenshot](task-manager_10-workers_end.png)
+Затем уровень нагрузки упал. Я не сделал скрины, но осталось только 2 процесса, которые делили ресурсы уже по 46-48%. При этом в консоли не было ни одной монетки. Под конец остался один процесс, а затем программа заврешила работу
+
+![Screenshot](10-cores-solution.png)
+Время майнинга сопоставимо с временем при 4 ворекерах. 
+
+
+И последний тест с <h4>max-workers=100:</h4>
+
+![Screenshot](task-manager_100-workers_start.png)
+Как и раньше сразу 100% нагрузка и 4 процесса
+
+![Screenshot](task-manager_100-workers_middle.png)
+Вот осталось 3 процесса при той же нагрузке в 100%. Если я правильно понял, процесс заканчивается, когда сгенерирована монетка, но при этом в консоль монетки выводятся только парами
+
+![Screenshot](task-manager_10-workers_end.png)
+Последняя монетка создана, все процессы отработали
+
+![Screenshot](100-cores-solution.png)
+Монетки майнились на компьютере с ОС Linux, поэтому ограничение на максимальное количество воркеров 61 (на винде) здесь не сработало, но это самое было самое долгое выполнение программы
+
