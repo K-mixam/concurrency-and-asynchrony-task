@@ -112,8 +112,8 @@ _____
 
 Результат работы программы:
 
-![Screenshot](task-manager-one-core.png)
-![Scrreenshot](one-core-solution.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager-one-core.png)
+![Scrreenshot](screenshots_for_CPU-bound/one-core-solution.png)
 
 
 Теперь перепишем код с использованием ProcessPoolExecutor:
@@ -143,53 +143,53 @@ _____
 
 Для анализа тестов важно знать информацию о процессоре (2 ядра):
 
-![Screenshot](processor_info.png)
+![Screenshot](screenshots_for_CPU-bound/processor_info.png)
 
 Тесты начнем с <h4>max_workers=2:</h4>
 
-![Screenshot](task-manager_2-workers_start.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_2-workers_start.png)
 С самого начала процессор был нагружен на 100%, диспетчер отображал 2 запущенных процесса
 
-![Screenshot](task-manager_2-workers_end.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_2-workers_end.png)
 Уровень загруженности процесора не менялся до конца работы программы
 
-![Screenshot](2-cores-solution.png)
+![Screenshot](screenshots_for_CPU-bound/2-cores-solution.png)
 Обратил внимание на то,что в консоли монеты появлялись парами. Не знаю, влияло ли это как-нибудь на скорость вычислений, но время работы даже больше, чем без ProcessPoolExecutor
 
 <h4>Теперь max_workers=4:</h4>
 
-![Screenshot](task-manager_4-workers_start.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_4-workers_start.png)
 Нагрузка также с самого начала 100%, диспетчер отображает 4 запущенных процесса
 
-![Screenshot](task-manager_4-workers_end.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_4-workers_end.png)
 И как в прошлый раз, нагрузка оставалсь 100% до конца работы программы
 
-![Screenshot](4-cores-solution.png)
+![Screenshot](screenshots_for_CPU-bound/4-cores-solution.png)
 Но время изменилось, монетки майнились быстрее
 
 
 На этапе <h4>max-workers=10</h4> я не могу объяснить происходящее:
 
-![Screenshot](task-manager_10-workers_start.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_10-workers_start.png)
 Началось все так же со 100%, но диспетчер отображал уже только 4 процесса, которые занимали основные ресуры процессора(23-24% на каждый процесс)
 
-![Screenshot](task-manager_10-workers_end.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_10-workers_end.png)
 Затем уровень нагрузки упал. Я не сделал скрины, но осталось только 2 процесса, которые делили ресурсы уже по 46-48%. При этом в консоли не было ни одной монетки. Под конец остался один процесс, а затем программа заврешила работу
 
-![Screenshot](10-cores-solution.png)
+![Screenshot](screenshots_for_CPU-bound/10-cores-solution.png)
 Время майнинга сопоставимо с временем при 4 ворекерах. 
 
 
 И последний тест с <h4>max-workers=100:</h4>
 
-![Screenshot](task-manager_100-workers_start.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_100-workers_start.png)
 Как и раньше сразу 100% нагрузка и 4 процесса
 
-![Screenshot](task-manager_100-workers_middle.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_100-workers_middle.png)
 Вот осталось 3 процесса при той же нагрузке в 100%. Если я правильно понял, процесс заканчивается, когда сгенерирована монетка, но при этом в консоль монетки выводятся только парами
 
-![Screenshot](task-manager_10-workers_end.png)
+![Screenshot](screenshots_for_CPU-bound/task-manager_10-workers_end.png)
 Последняя монетка создана, все процессы отработали
 
-![Screenshot](100-cores-solution.png)
+![Screenshot](screenshots_for_CPU-bound/100-cores-solution.png)
 Монетки майнились на компьютере с ОС Linux, поэтому ограничение на максимальное количество воркеров 61 (такое стоит на винде) здесь не сработало, но это самое было самое долгое выполнение программы
